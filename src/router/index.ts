@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import LoginView from '../views/Auth/LoginView.vue'
 import DashboardView from '../views/DashboardView.vue'
+import OrdersView from '../views/OrdersView.vue'
 
 const routes = [
   {
@@ -11,6 +12,13 @@ const routes = [
   {
     path: '/dashboard',
     component: DashboardView,
+    meta: {
+      requiresAuth: true
+    }
+  },
+  {
+    path: '/orders',
+    component: OrdersView,
     meta: {
       requiresAuth: true
     }
@@ -25,8 +33,11 @@ const router = createRouter({
 // Navigation Guard
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
-  if (!authStore.isAuthenticated && to.path !== '/login') {
+  console.log(authStore.isAuthenticated)
+  if (!authStore.isAuthenticated && to.meta.requiresAuth) {
     next('/login')
+  } else if (authStore.isAuthenticated && !to.meta.requiresAuth) {
+    next('/dashboard')
   } else {
     next()
   }

@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import apiClient from "@/services/api";
 import { ref } from "vue";
+import router from '@/router'
 
 export const useAuthStore = defineStore("auth", () => {
   const user = ref(null);
@@ -19,9 +20,8 @@ export const useAuthStore = defineStore("auth", () => {
   // Login: Fetch CSRF first, then attempt login
   const login = async (email: string, password: string) => {
     try {
-      const response = await apiClient.post("/login", { email, password });
-      user.value = response.data.user; // Store user data
-      isAuthenticated.value = true; // Mark as authenticated
+      await apiClient.post("/login", { email, password });
+      await fetchUser();
     } catch (error) {
       console.error("Login failed", error);
       isAuthenticated.value = false; // Ensure false on failure
@@ -45,13 +45,25 @@ export const useAuthStore = defineStore("auth", () => {
     try {
       const response = await apiClient.get("/api/user");
       user.value = response.data;
+      localStorage.setItem("user", JSON.stringify(response.data.data));
       isAuthenticated.value = true; // User exists, so authenticated
     } catch (error) {
       console.error("Failed to fetch user", error);
       user.value = null;
+      localStorage.removeItem("user");
       isAuthenticated.value = false; // No user, not authenticated
+      router.push('/login')
     }
   };
 
-  return { user, isAuthenticated, login, logout, fetchUser, fetchCsrfToken };
+  // Initialize a app and load needed data
+  const initialize = () => {
+    fetchCsrfToken();
+    if (localStorage.getItem("user")) {
+      isAuthenticated.value = true;
+      fetchUser();
+    }
+  }
+
+  return { user, isAuthenticated, login, logout, fetchUser, fetchCsrfToken, initialize };
 });
