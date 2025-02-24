@@ -3,17 +3,13 @@ import InputText from 'primevue/inputtext'
 import Message from 'primevue/message'
 import { Form } from '@primevue/forms'
 import { useAuthStore } from '@/stores/auth'
-import { useToast } from 'primevue/usetoast'
 import { useRouter } from 'vue-router'
 
 const authStore = useAuthStore()
 
-const toast = useToast();
-
 const router = useRouter()
 
 const onFormSubmit = ($form) => {
-  // authStore.logout()
   console.log($form)
   authStore.login(
     $form.states.email.value,
@@ -21,11 +17,11 @@ const onFormSubmit = ($form) => {
   ).then(() => {
     router.push('/dashboard')
   }).catch((error) => {
-    toast.add({
+    window.toast.add({
       severity: 'error',
       summary: 'Error',
       detail: error.response.data.message,
-      life: 3000
+      life: 5000
     })
   })
 }
