@@ -10,7 +10,6 @@ const authStore = useAuthStore()
 const router = useRouter()
 
 const onFormSubmit = ($form) => {
-  console.log($form)
   authStore.login(
     $form.states.email.value,
     $form.states.password.value

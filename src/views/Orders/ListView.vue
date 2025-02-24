@@ -3,16 +3,13 @@ import SideBar from '@/components/SideBar.vue'
 import { onMounted, ref } from 'vue'
 import apiClient from '@/services/api'
 import { Button } from 'primevue'
-import { Dialog } from 'primevue'
-import InputText from 'primevue/inputtext'
-import DatePicker from 'primevue/datepicker'
-import { cloneDeep } from 'lodash'
+import OrdersFormView from '@/views/Orders/FormView.vue'
 import { orderModel } from '@/models/orderModel.ts'
+import { cloneDeep } from 'lodash'
 
 const orders = ref([])
 let dialogVisible = ref(false)
-
-const orderValues = ref(cloneDeep(orderModel))
+let orderValues = ref(orderModel)
 
 onMounted(async () => {
   await loadOrders()
@@ -23,59 +20,24 @@ const loadOrders = async () => {
   orders.value = response.data.data
 }
 
-const openCreateModal = () => {
-  dialogVisible.value = true
-}
-
-const sendForm = async () => {
-  try {
-    await apiClient.post('api/orders', orderValues.value)
-
-    await loadOrders()
-    dialogVisible.value = false
-    orderValues.value = cloneDeep(orderModel)
-    window.toast.add({
-      severity: 'success',
-      summary: 'Success',
-      detail: 'Order created successfully!',
-      life: 5000
-    })
-  } catch (error) {
-    window.toast.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: error.response.data.message,
-      life: 5000
-    })
+const openModal = async (ID) => {
+  orderValues.value = cloneDeep(orderModel)
+  if (ID) {
+    const response = await apiClient.get('api/orders/' + ID)
+    orderValues.value = response.data.data
   }
+  dialogVisible.value = true
 }
 
 </script>
 
 <template>
   <SideBar />
-  <Dialog v-model:visible="dialogVisible" modal header="Create Orders" :style="{ width: '25rem' }">
-    <div class="flex flex-col gap-1 mb-4">
-      <label for="due_date">Due date</label>
-      <DatePicker v-model="orderValues.due_date" dateFormat="dd.mm.yy" :manualInput="false" />
-    </div>
-    <div class="flex flex-col gap-1 mb-5">
-      <label for="customer_name">Customer name</label>
-      <InputText v-model="orderValues.customer_name" id="customer_name" class="flex-auto" autocomplete="off" />
-    </div>
-    <div class="flex flex-col gap-1 mb-5">
-      <label for="customer_address">Customer address</label>
-      <InputText v-model="orderValues.customer_address" id="customer_address" class="flex-auto" autocomplete="off" />
-    </div>
-    <div class="flex justify-end gap-2">
-      <Button type="button" label="Cancel" severity="secondary" @click="dialogVisible = false"></Button>
-      <Button type="button" label="Save" @click="sendForm"></Button>
-    </div>
-  </Dialog>
+  <OrdersFormView v-model:dialogVisible="dialogVisible" v-model:order-values="orderValues"/>
   <div class="p-4 sm:ml-64">
     <div class="p-4 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700">
       <div class="flex justify-end pb-3">
-        <Button @click.prevent="openCreateModal">Create</Button>
+        <Button @click.prevent="openModal()">Create</Button>
       </div>
       <div class="relative overflow-x-auto">
         <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
@@ -96,6 +58,9 @@ const sendForm = async () => {
             <th scope="col" class="px-6 py-3">
               Current status
             </th>
+            <th scope="col" class="px-6 py-3">
+              Action
+            </th>
           </tr>
           </thead>
           <tbody>
@@ -114,6 +79,13 @@ const sendForm = async () => {
             </td>
             <td class="px-6 py-4">
               {{ order.current_status.value }}
+            </td>
+            <td class="px-6 py-4">
+              <a href="#" @click.prevent="openModal(order.id)">
+                <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                  <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m14.304 4.844 2.852 2.852M7 7H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-4.5m2.409-9.91a2.017 2.017 0 0 1 0 2.853l-6.844 6.844L8 14l.713-3.565 6.844-6.844a2.015 2.015 0 0 1 2.852 0Z" />
+                </svg>
+              </a>
             </td>
           </tr>
           </tbody>
